@@ -2,18 +2,39 @@ import os
 from tkinter import Tk, filedialog
 from pypdf import PdfWriter
 
-def pilih_file_pdf():
+def pilih_file_satu_per_satu():
     root = Tk()
     root.withdraw()
     root.attributes('-topmost', True)
 
-    file_paths = filedialog.askopenfilenames(
-        title="Pilih file PDF (urutan pemilihan akan menentukan urutan penggabungan)",
-        filetypes=[("PDF files", "*.pdf")]
-    )
+    file_list = []
+    nomor = 1
+
+    while True:
+        path = filedialog.askopenfilename(
+            title=f"Pilih file PDF ke-{nomor}",
+            filetypes=[("PDF files", "*.pdf")]
+        )
+
+        if not path:
+            # Kalau user tekan cancel, tanya apakah mau berhenti
+            if file_list:
+                break
+            else:
+                print("Tidak ada file yang dipilih. Program berhenti.")
+                root.destroy()
+                return []
+
+        file_list.append(path)
+        print(f"{nomor}. {os.path.basename(path)} ditambahkan.")
+        nomor += 1
+
+        lanjut = input("Tambah file PDF lagi? (y/n): ").strip().lower()
+        if lanjut != 'y':
+            break
 
     root.destroy()
-    return list(file_paths)
+    return file_list
 
 def gabungkan_pdf(list_file, output_path):
     merger = PdfWriter()
@@ -29,20 +50,23 @@ def gabungkan_pdf(list_file, output_path):
     print(f"\nBerhasil digabungkan menjadi: {output_path}")
 
 def main():
-    print("Silakan pilih file PDF yang ingin digabungkan.")
-    print("Urutan penggabungan mengikuti urutan Anda mengklik/memilih file di dialog.\n")
+    print("Silakan pilih file PDF satu per satu sesuai urutan yang diinginkan.\n")
 
-    file_list = pilih_file_pdf()
+    file_list = pilih_file_satu_per_satu()
 
     if not file_list:
-        print("Tidak ada file yang dipilih. Program berhenti.")
         return
 
-    print(f"\nJumlah file terpilih: {len(file_list)}")
+    print(f"\nUrutan file yang akan digabungkan:")
     for i, f in enumerate(file_list, start=1):
         print(f"{i}. {os.path.basename(f)}")
 
-    output_name = input("\nMasukkan nama file output (tanpa .pdf): ").strip()
+    konfirmasi = input("\nLanjutkan penggabungan dengan urutan di atas? (y/n): ").strip().lower()
+    if konfirmasi != 'y':
+        print("Program dibatalkan.")
+        return
+
+    output_name = input("Masukkan nama file output (tanpa .pdf): ").strip()
     if not output_name:
         output_name = "hasil_gabungan"
 
